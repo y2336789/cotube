@@ -8,7 +8,7 @@
     "url": "git+https://github.com/y2336789/cotube.git"
   },
   "scripts": {
-    "dev": "nodemon --exec babel-node src/server.js"
+    "dev": "nodemon --exec babel-node src/init.js"
   },
   "author": "Y2j <y2336789@naver.com>",
   "license": "MIT",
@@ -18,11 +18,14 @@
   "homepage": "https://github.com/y2336789/cotube.git#readme",
   "dependencies": {
     "express": "^4.17.1",
-    "morgan": "^1.10.0"
+    "mongoose": "^5.12.10",
+    "morgan": "^1.10.0",
+    "pug": "^3.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.14.3",
     "@babel/node": "^7.14.2",
-    "@babel/preset-env": "^7.14.2"
+    "@babel/preset-env": "^7.14.2",
+    "nodemon": "^2.0.7"
   }
 }
