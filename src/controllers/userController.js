@@ -1,4 +1,5 @@
 import User from "../models/User";
+import Video from "../models/Video";
 import fetch from "node-fetch";
 import bcrypt from "bcrypt";
 
@@ -137,19 +138,46 @@ export const logout = (req, res) => {
   req.session.destroy();
   return res.redirect("/");
 };
+
 export const getEdit = (req, res) => {
   return res.render("edit-profile", { pageTitle: "Edit Profile" });
 };
+
 export const postEdit = async (req, res) => {
   const {
     session: {
-      user: { _id },
+      user: { _id, avatarUrl },
     },
     body: { name, email, username, location },
+    // router에서 파일에 대한 정보를 받았기에 file 사용 가능
+    file,
   } = req;
+  console.log(file);
+  const sessionEmail = req.session.user.email;
+  const sessionUsername = req.session.user.username;
+  if (sessionEmail !== email) {
+    const emailExists = await User.exists({ email });
+    if (emailExists) {
+        return res.status(400).render("edit-profile", {
+            pageTitle: "Edit profile",
+            errorMessage: "The email already exists",
+        });
+    }
+  }
+  if (sessionUsername !== username) {
+    const usernameExists = await User.exists({ username });
+    if (usernameExists) {
+      return res.status(400).render("edit-profile", {
+        pageTitle: "Edit profile",
+        errorMessage: "The username already exists",
+    });
+    }
+  }
   const updatedUser = await User.findByIdAndUpdate(
     _id,
     {
+      // 파일이 존재하면 file.path 아니면 session에 저장된 기존의 avatarUrl
+      avatarUrl: file ? file.path : avatarUrl,
       name,
       email,
       username,
@@ -167,9 +195,45 @@ export const getChangePassword = (req, res) => {
   }
   return res.render("users/change-password", { pageTitle: "Change Password" });
 };
-export const postChangePassword = (req, res) => {
-  // send notification
-  return res.redirect("/");
+
+export const postChangePassword = async (req, res) => {
+  const {
+    session: {
+      user: { _id },
+    },
+    body: { oldPassword, newPassword, newPasswordConfirmation },
+  } = req;
+  const user = await User.findById(_id);
+  const ok = await bcrypt.compare(oldPassword, user.password);
+  if (!ok) {
+    return res.status(400).render("users/change-password", {
+      pageTitle: "Change Password",
+      errorMessage: "The current password is incorrect",
+    });
+  }
+  if (newPassword !== newPasswordConfirmation) {
+    return res.status(400).render("users/change-password", {
+      pageTitle: "Change Password",
+      errorMessage: "The password does not match the confirmation",
+    });
+  }
+  user.password = newPassword;
+  await user.save();
+  return res.redirect("/users/logout");
 };
 
-export const see = (req, res) => res.send("See User");
+export const see = async (req, res) => {
+  // 공개되는 프로필이니까 URL을 통해서 해당 사용자의 id를 가져옴
+  const { id } = req.params;
+  const user = await User.findById(id).populate("videos");
+  if(!user){
+    return res.status(404).render("404", { pageTitle : "User not found" });
+  }
+  // video의 owner가 'params'의 'id'와 같은 video를 찾기
+  // const videos = await Video.find({ owner: user._id });
+  // render는 views 폴더를 기준으로 파일을 찾으니까 경로를 써줌 -> users 폴더 안의 profile 파일
+  return res.render("users/profile", { 
+    pageTitle: `${user.name}의 Profile`, 
+    user, 
+  });
+};
