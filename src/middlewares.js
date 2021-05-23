@@ -2,7 +2,7 @@ import multer from "multer";
 
 export const localsMiddleware = (req, res, next) => {
     res.locals.loggedIn = Boolean(req.session.loggedIn);
-    res.locals.siteName = "Wetube";
+    res.locals.siteName = "Coding with Cotube";
     // 현재 로그인된 사용자를 알려줌 req.session.user가 undefine일 수도 있음, loggedInUser도 User 모델임
     res.locals.loggedInUser = req.session.user || {};
     next();

@@ -27,6 +27,7 @@ app.use(
 app.use(localsMiddleware);
 // 사진을 인터넷에 띄우기 위해 uploads route를 만들고, express에게 폴더를 노출시킴
 app.use("/uploads", express.static("uploads"));
+app.use("/static", express.static("assets"));
 app.use("/", rootRouter);
 app.use("/videos", videoRouter);
 app.use("/users", userRouter);
