@@ -151,7 +151,6 @@ export const postEdit = async (req, res) => {
     // router에서 파일에 대한 정보를 받았기에 file 사용 가능
     file,
   } = req;
-  console.log(file);
   const sessionEmail = req.session.user.email;
   const sessionUsername = req.session.user.username;
   if (sessionEmail !== email) {
@@ -205,15 +204,15 @@ export const postChangePassword = async (req, res) => {
   const user = await User.findById(_id);
   const ok = await bcrypt.compare(oldPassword, user.password);
   if (!ok) {
+    req.flash("error", "기존의 비밀번호와 일치하지 않습니다.");
     return res.status(400).render("users/change-password", {
       pageTitle: "Change Password",
-      errorMessage: "The current password is incorrect",
     });
   }
   if (newPassword !== newPasswordConfirmation) {
+    req.flash("error", "비밀번호가 일치하지 않습니다.");
     return res.status(400).render("users/change-password", {
       pageTitle: "Change Password",
-      errorMessage: "The password does not match the confirmation",
     });
   }
   user.password = newPassword;
@@ -231,7 +230,7 @@ export const see = async (req, res) => {
       model: "User",
     },
   });
-  if(!user){
+  if(!user) {
     return res.status(404).render("404", { pageTitle : "User not found" });
   }
   // video의 owner가 'params'의 'id'와 같은 video를 찾기

@@ -12,6 +12,7 @@ export const localsMiddleware = (req, res, next) => {
     if (req.session.loggedIn) {
       return next();
     } else {
+      req.flash("error", "Log in first.");
       return res.redirect("/login");
     }
   };
@@ -20,6 +21,7 @@ export const localsMiddleware = (req, res, next) => {
     if (!req.session.loggedIn) {
       return next();
     } else {
+      req.flash("error", "이미 로그인 되어 있습니다.");
       return res.redirect("/");
     }
   };

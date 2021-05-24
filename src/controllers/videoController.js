@@ -1,4 +1,5 @@
 import Video from "../models/Video";
+import Comment from "../models/Comments";
 import User from "../models/User";
 
 export const home = async (req, res) => {
@@ -12,7 +13,8 @@ export const watch = async (req, res) => {
   const { id } = req.params;
   // owner 부분을 실제 데이터로 채워줌, populate(relaitonship)을 써주면 되는데, 랜덤값이 아님 진짜 값이 담김
   // 즉 video 모델 안에 onwer에 User의 정보(모델)이 다 담긴다
-  const video = await Video.findById(id).populate("owner");
+  const video = await Video.findById(id).populate("owner").populate("comments");
+  console.log(video);
   if (!video) {
     return res.render("404", { pageTitle: "Video not found." });
   }
@@ -21,32 +23,31 @@ export const watch = async (req, res) => {
 
 export const getEdit = async (req, res) => {
   const { id } = req.params;
-  const { 
-    user : { _id },
+  const {
+    user: { _id },
   } = req.session;
   const video = await Video.findById(id);
   if (!video) {
     return res.status(404).render("404", { pageTitle: "Video not found." });
   }
-  // JS에서는 생김새 외에 데이터 형식도 비교하기 때문에 String으로 변환, video.onwer는 object, _id는 string
-  if (String(video.owner) !== String(_id)){
-    // forbidden
+  if (String(video.owner._id) !== String(_id)) {
     return res.status(403).redirect("/");
   }
   return res.render("edit", { pageTitle: `Edit: ${video.title}`, video });
 };
 
 export const postEdit = async (req, res) => {
+  const { id } = req.params;
   const {
     user: { _id },
   } = req.session;
-  const { id } = req.params;
   const { title, description, hashtags } = req.body;
-  const video = await Video.exists({ _id: id });
+  const video = await Video.findById(id);
   if (!video) {
     return res.status(404).render("404", { pageTitle: "Video not found." });
   }
   if (String(video.owner) !== String(_id)) {
+    req.flash("error", "동영상 업로더가 아닙니다.");
     return res.status(403).redirect("/");
   }
   await Video.findByIdAndUpdate(id, {
@@ -54,18 +55,18 @@ export const postEdit = async (req, res) => {
     description,
     hashtags: Video.formatHashtags(hashtags),
   });
+  req.flash("success", "Changes saved.");
   return res.redirect(`/videos/${id}`);
 };
 
 export const getUpload = (req, res) => {
   return res.render("upload", { pageTitle: "Upload Video" });
 };
-
+// multer는 req.file을 제공!
 export const postUpload = async (req, res) => {
   const {
-     user : { _id },
+    user: { _id },
   } = req.session;
-  // multer는 req.file을 제공!
   const { path: fileUrl } = req.file;
   const { title, description, hashtags } = req.body;
   try {
@@ -81,6 +82,7 @@ export const postUpload = async (req, res) => {
     user.save();
     return res.redirect("/");
   } catch (error) {
+    console.log(error);
     return res.status(400).render("upload", {
       pageTitle: "Upload Video",
       errorMessage: error._message,
@@ -115,4 +117,35 @@ export const search = async (req, res) => {
     }).populate("owner");
   }
   return res.render("search", { pageTitle: "Search", videos });
+};
+
+export const registerView = async (req, res) => {
+  const { id } = req.params;
+  const video = await Video.findById(id);
+  if (!video) {
+    return res.sendStatus(404);
+  }
+  // 못 찾는다고  템플릿을랜더링하지 않을 것임, 단순히 Views를 늘리는 정보만 보낼 것임
+  video.meta.views = video.meta.views + 1;
+  await video.save();
+  // status 값을 보내고 연결을 끝냄
+  return res.sendStatus(200);
+};
+
+export const createComment = async (req, res) => {
+  const {
+    session: { user },
+    body: { text },
+    params: { id },
+  } = req;
+  const video = await Video.findById(id);
+  if (!video) {
+    return res.sendStatus(404);
+  }
+  const comment = await Comment.create({
+    text,
+    owner: user._id,
+    video: id,
+  });
+  return res.sendStatus(201);
 };
