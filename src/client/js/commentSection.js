@@ -11,7 +11,7 @@ const addComment = (text) => {
   span.innerText = ` ${text}`;
   newComment.appendChild(icon);
   newComment.appendChild(span);
-  videoComments.prepend(newComment);
+  videoComments.prepend(newComment); 
 };
 
 const handleSubmit = (event) => {

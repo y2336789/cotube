@@ -14,7 +14,6 @@ export const watch = async (req, res) => {
   // owner 부분을 실제 데이터로 채워줌, populate(relaitonship)을 써주면 되는데, 랜덤값이 아님 진짜 값이 담김
   // 즉 video 모델 안에 onwer에 User의 정보(모델)이 다 담긴다
   const video = await Video.findById(id).populate("owner").populate("comments");
-  console.log(video);
   if (!video) {
     return res.render("404", { pageTitle: "Video not found." });
   }
