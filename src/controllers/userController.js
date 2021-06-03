@@ -171,11 +171,12 @@ export const postEdit = async (req, res) => {
     });
     }
   }
+  console.log(file);
   const updatedUser = await User.findByIdAndUpdate(
     _id,
     {
       // 파일이 존재하면 file.path 아니면 session에 저장된 기존의 avatarUrl
-      avatarUrl: file ? file.path : avatarUrl,
+      avatarUrl: file ? file.location : avatarUrl,
       name,
       email,
       username,
